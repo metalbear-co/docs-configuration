@@ -2,4 +2,4 @@ root: ./
 
 ​structure:
   summary: SUMMARY.md​
-  readme: configuration/configuration.md
+  readme: configuration/README.md

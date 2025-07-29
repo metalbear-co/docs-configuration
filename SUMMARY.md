@@ -1,5 +1,5 @@
 # Table of contents
 
-- [Configuration](configuration/configuration.md)
+- [Configuration](configuration/README.md)
     - [Examples](configuration/examples.md)
     - [Options](configuration/options.md)
