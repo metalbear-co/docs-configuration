@@ -542,11 +542,11 @@ The [`env`](options.md#feature.env), [`fs`](options.md#feature.fs) and [`network
 
 ### feature.copy\_target
 
-Creates a new copy of the target. mirrord will use this copy instead of the original target (e.g. intercept network traffic). This feature requires a [mirrord operator](overview/teams.md).
+Creates a new copy of the target. mirrord will use this copy instead of the original target (e.g. intercept network traffic). This feature requires a [mirrord operator](https://app.gitbook.com/s/ghNlSpMkqkYKZCZQsHRt/overview/teams).
 
 This feature is not compatible with rollout targets and running without a target (`targetless` mode).
 
-Allows the user to target a pod created dynamically from the orignal [`target`](configuration/configuration.md#target). The new pod inherits most of the original target's specification, e.g. labels.
+Allows the user to target a pod created dynamically from the orignal [`target`](options.md#target). The new pod inherits most of the original target's specification, e.g. labels.
 
 ```json
 {
@@ -588,9 +588,9 @@ Can be set to one of the options:
 2. `true` - Enables the feature, will obtain remote environment variables.
 3. object - see below (means `true` + additional configuration).
 
-Which environment variables to load from the remote pod are controlled by setting either [`include`](configuration/configuration.md#feature-env-include) or [`exclude`](configuration/configuration.md#feature-env-exclude).
+Which environment variables to load from the remote pod are controlled by setting either [`include`](options.md#feature.env.include) or [`exclude`](options.md#feature.env.exclude).
 
-See the environment variables [reference](configuration/env.md) for more details.
+See the environment variables [reference](https://app.gitbook.com/s/ghNlSpMkqkYKZCZQsHRt/reference/env) for more details.
 
 ```json
 {
@@ -708,7 +708,7 @@ The logic for choosing the behavior is as follows:
     In order to override that default setting for a path, or a pattern, include it the appropriate pattern set from above. E.g. in order to read files under `/etc/` remotely even though it is covered by [the set of patterns that are read locally by default](https://github.com/metalbear-co/mirrord/tree/latest/mirrord/layer/src/file/filter/read_local_by_default.rs), add `"^/etc/."` to the `read_only` set.
 4. If none of the above match, use the default behavior (mode).
 
-For more information, check the file operations [technical reference](configuration/fileops.md).
+For more information, check the file operations [technical reference](https://app.gitbook.com/s/ghNlSpMkqkYKZCZQsHRt/reference/fileops).
 
 ```json
 {
@@ -755,7 +755,7 @@ Configuration for enabling read-only or read-write file operations.
 
 These options are overriden by user specified overrides and mirrord default overrides.
 
-If you set [`"localwithoverrides"`](configuration/configuration.md#feature-fs-mode-localwithoverrides) then some files can be read/write remotely based on our default/user specified. Default option for general file configuration.
+If you set [`"localwithoverrides"`](options.md#feature.fs.local) then some files can be read/write remotely based on our default/user specified. Default option for general file configuration.
 
 The accepted values are: `"local"`, `"localwithoverrides`, `"read"`, or `"write`.
 
@@ -785,7 +785,7 @@ Should mirrord return the hostname of the target pod when calling `gethostname`
 
 Controls mirrord network operations.
 
-See the network traffic [reference](configuration/traffic.md) for more details.
+See the network traffic [reference](https://app.gitbook.com/s/ghNlSpMkqkYKZCZQsHRt/reference/traffic) for more details.
 
 ```json
 {
@@ -828,7 +828,7 @@ Defaults to `true`.
 
 Mind that:
 
-* DNS resolving can be done in multiple ways. Some frameworks use `getaddrinfo`/`gethostbyname` functions, while others communicate directly with the DNS server at port `53` and perform a sort of manual resolution. Just enabling the `dns` feature in mirrord might not be enough. If you see an address resolution error, try enabling the [`fs`](configuration/configuration.md#feature-fs) feature, and setting `read_only: ["/etc/resolv.conf"]`.
+* DNS resolving can be done in multiple ways. Some frameworks use `getaddrinfo`/`gethostbyname` functions, while others communicate directly with the DNS server at port `53` and perform a sort of manual resolution. Just enabling the `dns` feature in mirrord might not be enough. If you see an address resolution error, try enabling the [`fs`](options.md#feature.fs) feature, and setting `read_only: ["/etc/resolv.conf"]`.
 * DNS filter currently works only with frameworks that use `getaddrinfo`/`gethostbyname` functions.
 
 **feature.network.dns.filter**
@@ -887,9 +887,9 @@ Valid values follow this pattern: `[name|address|subnet/mask][:port]`.
 
 Controls the incoming TCP traffic feature.
 
-See the incoming traffic [reference](configuration/traffic.md#incoming) for more details.
+See the incoming traffic [reference](https://app.gitbook.com/s/ghNlSpMkqkYKZCZQsHRt/reference/traffic#incoming) for more details.
 
-Incoming traffic supports 3 [modes](configuration/configuration.md#feature-network-incoming-mode) of operation:
+Incoming traffic supports 3 modes of operation:
 
 1. Mirror (**default**): Sniffs the TCP data from a port, and forwards a copy to the interested listeners;
 2. Steal: Captures the TCP data from a port, and forwards it to the local process.
@@ -900,7 +900,7 @@ This field can either take an object with more configuration fields (that are do
 * A boolean:
   * `true`: use the default configuration, same as not specifying this field at all.
   * `false`: disable incoming configuration.
-* One of the incoming [modes](configuration/configuration.md#feature-network-incoming-mode) (lowercase).
+* One of the incoming modes (see `feature.network.incoming.mode`).
 
 Examples:
 
@@ -928,7 +928,7 @@ Disable the incoming traffic feature:
 }
 ```
 
-Steal only traffic that matches the [`http_filter`](configuration/configuration.md#feature-network-incoming-http_filter) (steals only HTTP traffic).
+Steal only traffic that matches the [`http_filter`](options.md#feature.network.incoming) (steals only HTTP traffic).
 
 ```json
 {
@@ -955,7 +955,7 @@ Filter configuration for the HTTP traffic stealer feature.
 
 Allows the user to set a filter (regex) for the HTTP headers, so that the stealer traffic feature only captures HTTP requests that match the specified filter, forwarding unmatched requests to their original destinations.
 
-Only does something when [`feature.network.incoming.mode`](configuration/configuration.md#feature-network-incoming-mode) is set as `"steal"`, ignored otherwise.
+Only does something when `feature.network.incoming.mode` is set as `"steal"`, ignored otherwise.
 
 For example, to filter based on header:
 
@@ -1075,7 +1075,7 @@ Case-insensitive. Tries to find match in the path (without query) and path+query
 
 Activate the HTTP traffic filter only for these ports.
 
-Other ports will _not_ be stolen, unless listed in [`feature.network.incoming.ports`](configuration/configuration.md#feature-network-incoming-ports).
+Other ports will _not_ be stolen, unless listed in `feature.network.incoming.ports`.
 
 We check the pod's health probe ports and automatically add them here, as they're usually the same ports your app might be listening on. If your app ports and the health probe ports don't match, then setting this option will override this behavior.
 
@@ -1170,9 +1170,9 @@ Each certificate found in the files is treated as an allowed root. The files can
 
 Ports to ignore when mirroring/stealing traffic, these ports will remain local.
 
-Can be especially useful when [`feature.network.incoming.mode`](configuration/configuration.md#feature-network-incoming-mode) is set to `"steal"`, and you want to avoid redirecting traffic from some ports (for example, traffic from a health probe, or other heartbeat-like traffic).
+Can be especially useful when `feature.network.incoming.mode` is set to `"steal"`, and you want to avoid redirecting traffic from some ports (for example, traffic from a health probe, or other heartbeat-like traffic).
 
-Mutually exclusive with [`feature.network.incoming.ports`](configuration/configuration.md#feature-network-ports).
+Mutually exclusive with `feature.network.incoming.ports`.
 
 **feature.network.incoming.listen\_ports**
 
@@ -1212,7 +1212,7 @@ This is useful when you want to mirror/steal a port to a different port on the r
 
 List of ports to mirror/steal traffic from. Other ports will remain local.
 
-Mutually exclusive with [`feature.network.incoming.ignore_ports`](configuration/configuration.md#feature-network-ignore_ports).
+Mutually exclusive with `feature.network.incoming.ignore_ports`.
 
 #### feature.network.ipv6
 
@@ -1222,7 +1222,7 @@ Enable ipv6 support. Turn on if your application listens to incoming traffic ove
 
 Tunnel outgoing network operations through mirrord.
 
-See the outgoing traffic [reference](configuration/traffic.md#outgoing) for more details.
+See the outgoing traffic [reference](https://app.gitbook.com/s/ghNlSpMkqkYKZCZQsHRt/reference/traffic#outgoing) for more details.
 
 The `remote` and `local` config for this feature are **mutually** exclusive.
 
@@ -1480,9 +1480,9 @@ Build-Tools: `["as", "cc", "ld", "go", "air", "asm", "cc1", "cgo", "dlv", "gcc",
 
 Allows mirrord to skip the specified build tools. Useful when running command lines that build and run the application in a single command.
 
-Must also enable [`skip_build_tools`](configuration/configuration.md#root-skip_build_tools) for this to take an effect.
+Must also enable [`skip_build_tools`](options.md#skip_build_tools) for this to take an effect.
 
-It's similar to [`skip_processes`](configuration/configuration.md#root-skip_processes), except that here it also skips SIP patching.
+It's similar to [`skip_processes`](options.md#skip_processes), except that here it also skips SIP patching.
 
 Accepts a single value, or an array of values.
 
@@ -1528,7 +1528,7 @@ The simplified configuration supports:
 Please note that:
 
 * `job`, `cronjob`, `statefulset` and `service` targets require the mirrord Operator
-* `job` and `cronjob` targets require the [`copy_target`](configuration/configuration.md#feature-copy_target) feature
+* `job` and `cronjob` targets require the [`copy_target`](options.md#feature.copy_target) feature
 
 Shortened setup with a target:
 
@@ -1601,8 +1601,8 @@ Supports:
 * `pod/{pod-name}[/container/{container-name}]`;
 * `deployment/{deployment-name}[/container/{container-name}]`;
 * `rollout/{rollout-name}[/container/{container-name}]`;
-* `job/{job-name}[/container/{container-name}]`; (requires mirrord Operator and the [`copy_target`](configuration/configuration.md#feature-copy_target) feature)
-* `cronjob/{cronjob-name}[/container/{container-name}]`; (requires mirrord Operator and the [`copy_target`](configuration/configuration.md#feature-copy_target) feature)
+* `job/{job-name}[/container/{container-name}]`; (requires mirrord Operator and the [`copy_target`](options.md#feature.copy_target) feature)
+* `cronjob/{cronjob-name}[/container/{container-name}]`; (requires mirrord Operator and the [`copy_target`](options.md#feature.copy_target) feature)
 * `statefulset/{statefulset-name}[/container/{container-name}]`; (requires mirrord Operator)
 * `service/{service-name}[/container/{container-name}]`; (requires mirrord Operator)
 * `replicaset/{replicaset-name}[/container/{container-name}]`; (requires mirrord Operator)
