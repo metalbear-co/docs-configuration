@@ -13,12 +13,26 @@ tags:
   - open source
   - team
   - enterprise
-description: Examples of basic and advanced configuration files, including templating and all available options.
+description: Getting started with mirrord configuration.
 ---
+
+# Getting Started
+
+mirrord allows for a high degree of customization when it comes to which features you want to enable, and how they should function.
+
+All of the configuration fields have a default value, so a minimal configuration would be no configuration at all.
+
+The configuration supports templating using the [Tera](https://keats.github.io/tera/docs/) template engine. Currently we don't provide additional values to the context, if you have anything you want us to provide please let us know.
+
+To use a configuration file in the CLI, use the `-f <CONFIG_PATH>` flag. Or if using VSCode Extension or JetBrains plugin, simply create a `.mirrord/mirrord.json` file or use the UI.
+
+
+
+## Examples
 
 To help you get started, here are examples of a basic configuration file, and a complete configuration file containing all fields.
 
-## Basic `config.json`
+### Basic `mirrord.json`
 
 ```json
 {
@@ -31,7 +45,7 @@ To help you get started, here are examples of a basic configuration file, and a 
 }
 ```
 
-## Basic `config.json` with templating
+### Basic `mirrord.json` with templating
 
 ```json
 {
@@ -44,7 +58,7 @@ To help you get started, here are examples of a basic configuration file, and a 
 }
 ```
 
-## Complete `config.json`
+### Complete `mirrord.json`
 
 Don't use this example as a starting point, it's just here to show you all the available options.
 
