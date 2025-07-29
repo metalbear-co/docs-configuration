@@ -492,9 +492,9 @@ Common cases would be running with dlv or any other debugger, which sets a break
 
 Controls mirrord features.
 
-See the [using mirrord](using-mirrord/) section to learn more about what each feature does.
+See the [using mirrord](https://app.gitbook.com/s/ghNlSpMkqkYKZCZQsHRt/using-mirrord) section to learn more about what each feature does.
 
-The [`env`](configuration/configuration.md#feature-env), [`fs`](configuration/configuration.md#feature-fs) and [`network`](configuration/configuration.md#feature-network) options have support for a shortened version, that you can see [here](configuration/configuration.md#root-shortened).
+The [`env`](options.md#feature.env), [`fs`](options.md#feature.fs) and [`network`](options.md#feature.network) options have support for a shortened version, that you can see [here](configuration/configuration.md#root-shortened).
 
 ```json
 {
