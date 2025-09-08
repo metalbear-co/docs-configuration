@@ -577,6 +577,92 @@ This option is compatible only with deployment targets.
       "scale_down": true
     }
 ```
+### feature.db\_branches
+
+Configuration for the database branching feature.
+
+A list of configurations for database branches.
+
+```json
+{
+  "feature": {
+    "db_branches": [
+      {
+        "name": "my-database-name",
+        "ttl_secs": 120,
+        "type": "mysql",
+        "version": "8.0",
+        "connection": {
+          "url": {
+            "type": "env",
+            "variable": "DB_CONNECTION_URL"
+          }
+        }
+      }
+    ]
+  }
+}
+```
+
+Configuration for a database branch.
+
+Example:
+
+```json
+{
+  "id": "my-branch-db",
+  "name": "my-database-name",
+  "ttl_secs": 120,
+  "type": "mysql",
+  "version": "8.0",
+  "connection": {
+    "url": {
+      "type": "env",
+      "variable": "DB_CONNECTION_URL"
+    }
+  }
+}
+```
+
+#### feature.db\_branches.type
+
+Currently MySQL is the only supported database type.
+
+#### feature.db\_branches.connection
+
+`connection` describes how to get the connection information to the source database. When the branch database is ready for use, Mirrord operator will replace the connection information with the branch database's.
+
+Different ways of connecting to the source database.
+
+Example:
+
+A single complete connection URL stored in an environment variable accessible from the target pod template.
+
+```json
+{
+  "url": {
+    "type": "env",
+    "variable": "DB_CONNECTION_URL"
+  }
+}
+```
+
+#### feature.db\_branches.id
+
+Users can choose to specify a unique `id`. This is useful for reusing or sharing the same database branch among Kubernetes users.
+
+#### feature.db\_branches.name
+
+When source database connection detail is not accessible to mirrord operator, users can specify the database `name` so it is included in the connection options mirrord uses as the override.
+
+#### feature.db\_branches.ttl\_secs
+
+Mirrord operator starts counting the TTL when a branch is no longer used by any session. The time-to-live (TTL) for the branch database is set to 300 seconds by default. Users can set `ttl_secs` to customize this value according to their need.
+Please note that longer TTL paired with frequent mirrord session turnover can result in increased resource usage. For this reason, branch database TTL caps out at 15 min.
+
+#### feature.db\_branches.version
+
+Mirrord operator uses a default version of the database image unless `version` is given.
 
 ### feature.env
 
