@@ -373,17 +373,38 @@ This should be useful if your host machine is exposed with a different IP addres
 
 mirrord Experimental features. This shouldn't be used unless someone from MetalBear/mirrord tells you to.
 
+### _experimental_ browser\_extension\_config
+
+mirrord will open a URL for initiating mirrord browser extension to automatically inject HTTP header that matches the HTTP filter configured in `feature.network.incoming.http_filter.header_filter`.
+
 ### _experimental_ disable\_reuseaddr
 
 Disables the `SO_REUSEADDR` socket option on sockets that mirrord steals/mirrors. On macOS the application can use the same address many times but then we don't steal it correctly. This probably should be on by default but we want to gradually roll it out. https://github.com/metalbear-co/mirrord/issues/2819 This option applies only on macOS.
+
+### _experimental_ dns\_permission\_error\_fatal
+
+Whether to terminate the session when a permission denied error occurs during DNS resolution. This error often means that the Kubernetes cluster is hardened, and the mirrord-agent is not fully functional without `agent.privileged` enabled.
+
+Defaults to `true` in OSS.
+Defaults to `false` in mfT.
 
 ### _experimental_ enable\_exec\_hooks\_linux
 
 Enables exec hooks on Linux. Enable Linux hooks can fix issues when the application shares sockets with child commands (e.g Python web servers with reload), but the feature is not stable and may cause other issues.
 
+### _experimental_ force\_hook\_connect
+
+Forces hooking all instances of the connect function. In very niche cases the connect function has multiple exports and this flag makes us hook all of the instances.
+
 ### _experimental_ hide\_ipv6\_interfaces
 
 Enables `getifaddrs` hook that removes IPv6 interfaces from the list returned by libc.
+
+### _experimental_ hook\_rename
+
+Enables hooking the `rename` function.
+
+Useful if you need file remapping and your application uses `rename`, i.e. `php-fpm`, `twig`, to create and rename temporary files.
 
 ### _experimental_ idle\_local\_http\_connection\_timeout
 
@@ -397,6 +418,17 @@ Set to 0 to disable caching local HTTP connections (connections will be dropped 
 
 Defaults to 3000ms.
 
+### _experimental_ ignore\_system\_proxy\_config
+
+Disables any system wide proxy configuration for affecting the running application.
+
+### _experimental_ non\_blocking\_tcp\_connect
+
+Enables better support for outgoing connections using non-blocking TCP sockets.
+
+Defaults to `true` in OSS.
+Defaults to `false` in mfT.
+
 ### _experimental_ readlink
 
 DEPRECATED, WILL BE REMOVED
@@ -404,6 +436,10 @@ DEPRECATED, WILL BE REMOVED
 ### _experimental_ readonly\_file\_buffer
 
 DEPRECATED, WILL BE REMOVED: moved to `feature.fs.readonly_file_buffer` as part of stabilisation. See https://github.com/metalbear-co/mirrord/issues/2069.
+
+### _experimental_ sip\_log\_destination
+
+Writes basic fork-safe SIP patching logs to a destination file. Useful for seeing the state of SIP when `stdout` may be affected by another process.
 
 ### _experimental_ tcp\_ping4\_mock
 
@@ -416,6 +452,12 @@ Enables trusting any certificate on macOS, useful for https://github.com/golang/
 ### _experimental_ use\_dev\_null
 
 Uses /dev/null for creating local fake files (should be better than using /tmp)
+
+### _experimental_ vfork\_emulation
+
+Enables vfork emulation within the mirrord-layer. Might solve rare stack corruption issues.
+
+Note that for Go applications on ARM64, this feature is not yet supported, and this setting is ignored.
 
 ## external\_proxy
 
@@ -462,7 +504,14 @@ Defaults to true.
 
 ### external\_proxy.log\_destination
 
-Set the log file destination for the external proxy.
+Set the log destination for the external proxy.
+
+1. If the provided path ends with a separator (`/` on UNIX, `\` on Windows), it will be
+   treated as a path to directory where the log file should be created.
+2. Otherwise, if the path exists, mirrord will check if it's a directory or not.
+3. Otherwise, it will be treated as a path to the log file.
+
+mirrord will auto create all parent directories.
 
 Defaults to a randomized path inside the temporary directory.
 
