@@ -32,7 +32,7 @@ To use a configuration file in the CLI, use the `-f <CONFIG_PATH>` flag. Or if u
 
 To help you get started, here are examples of a basic configuration file, and a complete configuration file containing all fields.
 
-### Basic `mirrord.json`
+### Basic `config.json` {#root-basic}
 
 ```json
 {
@@ -45,7 +45,7 @@ To help you get started, here are examples of a basic configuration file, and a 
 }
 ```
 
-### Basic `mirrord.json` with templating
+### Basic `config.json` with templating {#root-basic-templating}
 
 ```json
 {
@@ -58,10 +58,10 @@ To help you get started, here are examples of a basic configuration file, and a 
 }
 ```
 
-### Complete `mirrord.json`
+### Complete `config.json` {#root-complete}
 
-Don't use this example as a starting point, it's just here to show you all the available options.
-
+ Don't use this example as a starting point, it's just here to show you all the available
+ options.
 ```json
 {
   "accept_invalid_certificates": false,
@@ -79,14 +79,13 @@ Don't use this example as a starting point, it's just here to show you all the a
     "namespace": "default",
     "image": "ghcr.io/metalbear-co/mirrord:latest",
     "image_pull_policy": "IfNotPresent",
-    "image_pull_secrets": [{ "secret-key": "secret" }],
+    "image_pull_secrets": [ { "secret-key": "secret" } ],
     "ttl": 30,
     "ephemeral": false,
     "communication_timeout": 30,
     "startup_timeout": 360,
-    "network_interface": "eth0",
     "flush_connections": true,
-    "metrics": "0.0.0.0:9000"
+    "metrics": "0.0.0.0:9000",
   },
   "feature": {
     "env": {
@@ -102,9 +101,9 @@ Don't use this example as a starting point, it's just here to show you all the a
     },
     "fs": {
       "mode": "write",
-      "read_write": ".+\\.json",
-      "read_only": [".+\\.yaml", ".+important-file\\.txt"],
-      "local": [".+\\.js", ".+\\.mjs"]
+      "read_write": ".+\\.json" ,
+      "read_only": [ ".+\\.yaml", ".+important-file\\.txt" ],
+      "local": [ ".+\\.js", ".+\\.mjs" ]
     },
     "network": {
       "incoming": {
@@ -112,7 +111,7 @@ Don't use this example as a starting point, it's just here to show you all the a
         "http_filter": {
           "header_filter": "host: api\\..+"
         },
-        "port_mapping": [[7777, 8888]],
+        "port_mapping": [[ 7777, 8888 ]],
         "ignore_localhost": false,
         "ignore_ports": [9999, 10000]
       },
