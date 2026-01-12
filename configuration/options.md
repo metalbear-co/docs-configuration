@@ -428,7 +428,7 @@ Configuration for mirrord for CI.
 }
 ```
 
-### ci.output_dir{#ci-output_dir}
+### ci.output_dir {#ci-output_dir}
 
 Path to a directory where `mirrord ci` will flush application's stdout and stderr.
 
@@ -837,9 +837,9 @@ Example:
 
 When configuring a branch for MySQL, set `type` to `mysql`.
 
-Despite the database type, all database branch config objects share the following fields.
+MySQL and Postgres database branch config objects share the following fields.
 
-#### feature.db_branches.base.connection {#feature-db_branches-base-connection}
+#### feature.db_branches[].connection (type: mysql, pg) {#feature-db_branches-sql-connection}
 
 `connection` describes how to get the connection information to the source database.
 When the branch database is ready for use, Mirrord operator will replace the connection
@@ -867,24 +867,24 @@ Support:
 - `env` in the target's pod spec.
 - `envFrom` in the target's pod spec.
 
-#### feature.db_branches.base.creation_timeout_secs {#feature-db_branches-base-creation_timeout_secs}
+#### feature.db_branches[].creation_timeout_secs (type: mysql, pg) {#feature-db_branches-sql-creation_timeout_secs}
 
 The timeout in seconds to wait for a database branch to become ready after creation.
 Defaults to 60 seconds. Adjust this value based on your database size and cluster
 performance.
 
-#### feature.db_branches.base.id {#feature-db_branches-base-id}
+#### feature.db_branches[].id (type: mysql, pg) {#feature-db_branches-sql-id}
 
 Users can choose to specify a unique `id`. This is useful for reusing or sharing
 the same database branch among Kubernetes users.
 
-#### feature.db_branches.base.name {#feature-db_branches-base-name}
+#### feature.db_branches[].name (type: mysql, pg) {#feature-db_branches-sql-name}
 
 When source database connection detail is not accessible to mirrord operator, users
 can specify the database `name` so it is included in the connection options mirrord
 uses as the override.
 
-#### feature.db_branches.base.ttl_secs {#feature-db_branches-base-ttl_secs}
+#### feature.db_branches[].ttl_secs (type: mysql, pg) {#feature-db_branches-sql-ttl_secs}
 
 Mirrord operator starts counting the TTL when a branch is no longer used by any session.
 The time-to-live (TTL) for the branch database is set to 300 seconds by default.
@@ -892,7 +892,7 @@ Users can set `ttl_secs` to customize this value according to their need. Please
 that longer TTL paired with frequent mirrord session turnover can result in increased
 resource usage. For this reason, branch database TTL caps out at 15 min.
 
-#### feature.db_branches.base.version {#feature-db_branches-base-version}
+#### feature.db_branches[].version (type: mysql, pg) {#feature-db_branches-sql-version}
 
 Mirrord operator uses a default version of the database image unless `version` is given.
 
@@ -954,9 +954,9 @@ created after the given timestamp will be copied.
 
 When configuring a branch for PostgreSQL, set `type` to `pg`.
 
-Despite the database type, all database branch config objects share the following fields.
+MySQL and Postgres database branch config objects share the following fields.
 
-#### feature.db_branches.base.connection {#feature-db_branches-base-connection}
+#### feature.db_branches[].connection (type: mysql, pg) {#feature-db_branches-sql-connection}
 
 `connection` describes how to get the connection information to the source database.
 When the branch database is ready for use, Mirrord operator will replace the connection
@@ -984,24 +984,24 @@ Support:
 - `env` in the target's pod spec.
 - `envFrom` in the target's pod spec.
 
-#### feature.db_branches.base.creation_timeout_secs {#feature-db_branches-base-creation_timeout_secs}
+#### feature.db_branches[].creation_timeout_secs (type: mysql, pg) {#feature-db_branches-sql-creation_timeout_secs}
 
 The timeout in seconds to wait for a database branch to become ready after creation.
 Defaults to 60 seconds. Adjust this value based on your database size and cluster
 performance.
 
-#### feature.db_branches.base.id {#feature-db_branches-base-id}
+#### feature.db_branches[].id (type: mysql, pg) {#feature-db_branches-sql-id}
 
 Users can choose to specify a unique `id`. This is useful for reusing or sharing
 the same database branch among Kubernetes users.
 
-#### feature.db_branches.base.name {#feature-db_branches-base-name}
+#### feature.db_branches[].name (type: mysql, pg) {#feature-db_branches-sql-name}
 
 When source database connection detail is not accessible to mirrord operator, users
 can specify the database `name` so it is included in the connection options mirrord
 uses as the override.
 
-#### feature.db_branches.base.ttl_secs {#feature-db_branches-base-ttl_secs}
+#### feature.db_branches[].ttl_secs (type: mysql, pg) {#feature-db_branches-sql-ttl_secs}
 
 Mirrord operator starts counting the TTL when a branch is no longer used by any session.
 The time-to-live (TTL) for the branch database is set to 300 seconds by default.
@@ -1009,7 +1009,7 @@ Users can set `ttl_secs` to customize this value according to their need. Please
 that longer TTL paired with frequent mirrord session turnover can result in increased
 resource usage. For this reason, branch database TTL caps out at 15 min.
 
-#### feature.db_branches.base.version {#feature-db_branches-base-version}
+#### feature.db_branches[].version (type: mysql, pg) {#feature-db_branches-sql-version}
 
 Mirrord operator uses a default version of the database image unless `version` is given.
 
@@ -1098,172 +1098,74 @@ Example with separated settings:
 }
 ```
 
-Connection configuration for the Redis instance.
+#### feature.db_branches[].connection (type: redis) {#feature-db_branches-redis-connection}
 
-Redis connection configuration.
+Connection configuration for the Redis instance.
 
 Supports either a complete URL or separated connection parameters.
 If both are provided, `url` takes precedence.
 
+The following fields can be sourced via remote environment variable:
+- url
+- host
+- password
+- username
+
+Example:
+```json
+"connection": {
+    "host": { "type": "env", "variable": "REDIS_HOST" },
+    "port": 6379,
+    "password": { "type": "env", "variable": "REDIS_PASSWORD" }
+}
+```
+
+##### feature.db_branches[].connection.database (type: redis)
+
 Redis database number (default: 0).
 
+##### feature.db_branches[].connection.host (type: redis)
+
 Redis host/hostname.
+Can be sourced from an environment variable.
 
-Source for a Redis configuration value.
-
-Values can be specified directly or sourced from environment variables.
-
-Direct value.
-
-Value sourced from environment.
-
-Environment variable source for Redis values.
-
-Optional container name for multi-container pods.
-
-Must be "env" to indicate environment variable source.
-
-Type marker for environment variable sources.
-
-Name of the environment variable.
+##### feature.db_branches[].connection.password (type: redis)
 
 Redis password for authentication.
+Can be sourced from an environment variable.
 
-Source for a Redis configuration value.
-
-Values can be specified directly or sourced from environment variables.
-
-Direct value.
-
-Value sourced from environment.
-
-Environment variable source for Redis values.
-
-Optional container name for multi-container pods.
-
-Must be "env" to indicate environment variable source.
-
-Type marker for environment variable sources.
-
-Name of the environment variable.
+##### feature.db_branches[].connection.port (type: redis)
 
 Redis port (default: 6379).
 
+##### feature.db_branches[].connection.tls (type: redis)
+
 Enable TLS/SSL connection.
+
+##### feature.db_branches[].connection.url (type: redis)
 
 Complete Redis URL (e.g., `redis://user:pass@host:6379/0`).
 Can be sourced from an environment variable.
 
-Source for a Redis configuration value.
-
-Values can be specified directly or sourced from environment variables.
-
-Direct value.
-
-Value sourced from environment.
-
-Environment variable source for Redis values.
-
-Optional container name for multi-container pods.
-
-Must be "env" to indicate environment variable source.
-
-Type marker for environment variable sources.
-
-Name of the environment variable.
+##### feature.db_branches[].connection.username (type: redis)
 
 Redis username (Redis 6+ ACL).
+Can be sourced from an environment variable.
 
-Source for a Redis configuration value.
-
-Values can be specified directly or sourced from environment variables.
-
-Direct value.
-
-Value sourced from environment.
-
-Environment variable source for Redis values.
-
-Optional container name for multi-container pods.
-
-Must be "env" to indicate environment variable source.
-
-Type marker for environment variable sources.
-
-Name of the environment variable.
+#### feature.db_branches[].id (type: redis) {#feature-db_branches-redis-id}
 
 Optional unique identifier for reusing branches across sessions.
+
+#### feature.db_branches[].local (type: redis) {#feature-db_branches-redis-local}
 
 Local Redis runtime configuration.
 Only used when `location` is `local`.
 
-Configuration for local Redis runtime.
-
-Custom path to the container command.
-If not provided, uses the runtime name from PATH (e.g., "docker").
-Example: `/usr/local/bin/docker` or `/home/user/.local/bin/podman`
-
-Which container runtime to use (Docker, Podman, or nerdctl).
-Only applies when `runtime` is `container` or `auto`.
-
-Container runtimes supported by mirrord.
-
-Docker container runtime. (default)
-
-nerdctl container runtime (containerd).
-
-Podman container runtime.
-
-Additional Redis configuration options.
-
-Additional arguments passed to the Redis server.
-
-Example:
-```json
-{
-  "args": ["--maxmemory", "256mb", "--appendonly", "yes"]
-}
-```
-
-Raw arguments passed directly to redis-server or as Docker CMD args.
-Use standard Redis config syntax (e.g., "--maxmemory 256mb").
-
-Local port to bind Redis to (default: 6379).
-
-Runtime backend for local Redis: `container`, `redis_server`, or `auto`.
-
-Runtime backend for running local Redis.
-
-For container-based runtimes, mirrord spawns the Redis image in a container.
-For `redis_server`, it runs the native binary directly.
-
-Backends:
-- `container` (default) - Uses a container runtime (Docker/Podman/nerdctl)
-- `redis_server` - Uses native redis-server binary
-- `auto` - Tries container first, falls back to redis-server
-
-Auto-detect: try container first, fall back to redis-server.
-
-Use a container runtime (configure which one via `container_runtime`). (default)
-
-Use native redis-server binary.
-
-Custom path to the redis-server binary.
-If not provided, uses "redis-server" from PATH.
-Example: `/opt/redis/bin/redis-server`
-
-Redis version/tag to use (default: "7-alpine").
-Used as the container image tag.
+#### feature.db_branches[].location (type: redis) {#feature-db_branches-redis-location}
 
 Where the Redis instance should run.
-- `local`: Spawns a local Redis instance.
-- `remote`: Uses the remote Redis (default behavior).
-
-Location for the Redis branch instance.
-
-Use a local Redis instance that mirrord manages.
-
-Use the remote Redis (default behavior, no-op).
+- `local`: Spawns a local Redis instance managed by mirrord.
+- `remote`: Uses the remote Redis (default behavior, no-op).
 
 ### feature.env {#feature-env}
 
@@ -1484,19 +1386,19 @@ Default option for general file configuration.
 
 The accepted values are: `"local"`, `"localwithoverrides`, `"read"`, or `"write`.
 
-**feature.fs.mode.local** {#feature-fs-mode-local}
+**feature.fs.mode.local**
 
 mirrord won't do anything fs-related, all operations will be local.
 
-**feature.fs.mode.localwithoverrides** {#feature-fs-mode-localwithoverrides}
+**feature.fs.mode.localwithoverrides**
 
 mirrord will run overrides on some file operations, but most will be local.
 
-**feature.fs.mode.read** {#feature-fs-mode-read}
+**feature.fs.mode.read**
 
 mirrord will read files from the remote, but won't write to them.
 
-**feature.fs.mode.write** {#feature-fs-mode-write}
+**feature.fs.mode.write**
 
 mirrord will read/write from the remote.
 
@@ -1581,7 +1483,7 @@ Mind that:
 - DNS filter currently works only with frameworks that use `getaddrinfo`/`gethostbyname`
   functions.
 
-**feature.network.dns.filter** {#feature-network-dns-filter}
+**feature.network.dns.filter**
 
 Unstable: the precise syntax of this config is subject to change.
 
@@ -1715,7 +1617,7 @@ Steal only traffic that matches the
 }
 ```
 
-**feature.network.incoming.http_filter** {#feature-network-incoming-http-filter}
+**feature.network.incoming.http_filter**
 
 Filter configuration for the HTTP traffic stealer feature.
 
@@ -1864,7 +1766,7 @@ If any of the two matches, the request is stolen.
 Activate the HTTP traffic filter only for these ports. When
 absent, filtering will be done for all ports.
 
-**feature.network.incoming.https_delivery** {#feature-network-incoming-https_delivery}
+**feature.network.incoming.https_delivery**
 
 DEPRECATED: use `tls_delivery` instead.
 
@@ -1954,9 +1856,9 @@ Directories are not traversed recursively.
 Each certificate found in the files is treated as an allowed root.
 The files can contain entries of other types, e.g private keys, which are ignored.
 
-**feature.network.incoming.ignore_localhost** {#feature-network-incoming-ignore_localhost}
+**feature.network.incoming.ignore_localhost**
 
-**feature.network.incoming.ignore_ports** {#feature-network-incoming-ignore_ports}
+**feature.network.incoming.ignore_ports**
 
 Ports to ignore when mirroring/stealing traffic, these ports will remain local.
 
@@ -1967,7 +1869,7 @@ a health probe, or other heartbeat-like traffic).
 
 Mutually exclusive with [`feature.network.incoming.ports`](#feature-network-ports).
 
-**feature.network.incoming.listen_ports** {#feature-network-incoming-listen_ports}
+**feature.network.incoming.listen_ports**
 
 Mapping for local ports to actually used local ports.
 When application listens on a port while steal/mirror is active
@@ -1982,7 +1884,7 @@ you probably can't listen on `80` without sudo, so you can use `[[80, 4480]]`
 then access it on `4480` while getting traffic from remote `80`.
 The value of `port_mapping` doesn't affect this.
 
-**feature.network.incoming.mode** {#feature-network-incoming-mode}
+**feature.network.incoming.mode**
 
 Allows selecting between mirrorring or stealing traffic.
 
@@ -2001,7 +1903,6 @@ Can be set to either `"mirror"` (default), `"steal"` or `"off"`.
    traffic on the port if it is HTTP;
 
 **feature.network.incoming.on_concurrent_steal**
-{#feature-network-incoming-on_concurrent_steal}
 
 (Operator Only): Allows overriding port locks
 
@@ -2011,7 +1912,7 @@ Can be set to either `"continue"` or `"override"`.
 - `"override"`: If port lock detected then override it with new lock and force close the
   original locking connection.
 
-**feature.network.incoming.port_mapping** {#feature-network-incoming-port_mapping}
+**feature.network.incoming.port_mapping**
 
 Mapping for local ports to remote ports.
 
@@ -2019,7 +1920,7 @@ This is useful when you want to mirror/steal a port to a different port on the r
 machine. For example, your local process listens on port `9333` and the container listens
 on port `80`. You'd use `[[9333, 80]]`
 
-**feature.network.incoming.ports {#feature-network-incoming-ports}
+**feature.network.incoming.ports
 
 When set, traffic will only be mirrored/stolen on these ports,
 and other ports will remain local. Otherwise, all ports are
@@ -2028,7 +1929,7 @@ mirrored/stolen.
 Mutually exclusive with
 [`feature.network.incoming.ignore_ports`](#feature-network-ignore_ports).
 
-**feature.network.incoming.tls_delivery** {#feature-network-incoming-tls_delivery}
+**feature.network.incoming.tls_delivery**
 
 (Operator Only): configures how mirrord delivers stolen TLS traffic
 to the local application.
@@ -2164,7 +2065,7 @@ this feature are **mutually** exclusive.
 }
 ```
 
-**feature.network.outgoing.filter** {#feature.network.outgoing.filter}
+**feature.network.outgoing.filter**
 
 Filters that are used to send specific traffic from either the remote pod or the local app
 
@@ -2217,19 +2118,19 @@ everything else will go through the remote pod.
 When filters are specified under `remote`, matching traffic will go through the remote pod,
 everything else will go through local.
 
-**feature.network.outgoing.ignore_localhost** {#feature.network.outgoing.ignore_localhost}
+**feature.network.outgoing.ignore_localhost**
 
 Defaults to `false`.
 
-**feature.network.outgoing.tcp** {#feature.network.outgoing.tcp}
+**feature.network.outgoing.tcp**
 
 Defaults to `true`.
 
-**feature.network.outgoing.udp** {#feature.network.outgoing.udp}
+**feature.network.outgoing.udp**
 
 Defaults to `true`.
 
-**feature.network.outgoing.unix_streams** {#feature.network.outgoing.unix_streams}
+**feature.network.outgoing.unix_streams**
 
 Connect to these unix streams remotely (and to all other paths locally).
 
