@@ -315,8 +315,6 @@ as targeted agent always runs on the same node as its target container.
 
 Specifies the priority class to assign to the agent pod.
 
-This option is only applicable when running in the targetless mode.
-
 ```json
 {
   "agent": {
@@ -325,10 +323,9 @@ This option is only applicable when running in the targetless mode.
 }
 ```
 
-In some cases, the targetless agent pod may fail to schedule due to node resource
-constraints. Setting a priority class allows you to explicitly assign an existing
-priority class from your cluster to the agent pod, increasing its priority relative
-to other workloads.
+In some cases, the agent pod may fail to schedule due to node resource constraints.
+Setting a priority class allows you to explicitly assign an existing priority class
+from your cluster to the agent pod, increasing its priority relative to other workloads.
 
 ### agent.privileged {#agent-privileged}
 
@@ -519,7 +516,7 @@ This shouldn't be used unless someone from MetalBear/mirrord tells you to.
 
 ### _experimental_ applev {#experimental-applev}
 
-Configuraiton for inspecting and modifying apple variables. macOS only.
+Configuration for inspecting and modifying apple variables. macOS only.
 
 ### _experimental_ browser_extension_config {#experimental-browser_extension_config}
 
@@ -861,12 +858,6 @@ the target pod template.
 }
 ```
 
-Different ways to source the connection options.
-
-Support:
-- `env` in the target's pod spec.
-- `envFrom` in the target's pod spec.
-
 #### feature.db_branches[].creation_timeout_secs (type: mysql, pg) {#feature-db_branches-sql-creation_timeout_secs}
 
 The timeout in seconds to wait for a database branch to become ready after creation.
@@ -978,12 +969,6 @@ the target pod template.
 }
 ```
 
-Different ways to source the connection options.
-
-Support:
-- `env` in the target's pod spec.
-- `envFrom` in the target's pod spec.
-
 #### feature.db_branches[].creation_timeout_secs (type: mysql, pg) {#feature-db_branches-sql-creation_timeout_secs}
 
 The timeout in seconds to wait for a database branch to become ready after creation.
@@ -1068,6 +1053,62 @@ Example:
 
 With the config above, only alice and bob from the `users` table and orders
 created after the given timestamp will be copied.
+
+#### feature.db_branches[].iam_auth (type: pg) {#feature-db_branches-pg-iam_auth}
+
+IAM authentication for the source database.
+Use this when your source database (AWS RDS, GCP Cloud SQL) requires IAM authentication
+instead of password-based authentication.
+
+Environment variable sources follow the same pattern as `connection.url`:
+- `{ "type": "env", "variable": "VAR_NAME" }` - direct env var from pod spec
+- `{ "type": "env_from", "variable": "VAR_NAME" }` - from configMapRef/secretRef
+
+For AWS RDS/Aurora IAM authentication, set `type` to `"aws_rds"`.
+
+Example:
+```json
+{
+  "iam_auth": {
+    "type": "aws_rds",
+    "region": { "type": "env", "variable": "MY_AWS_REGION" },
+    "access_key_id": { "type": "env_from", "variable": "AWS_KEY" }
+  }
+}
+```
+
+The init container must have AWS credentials (via IRSA, instance profile, or env vars).
+
+Parameters:
+- `region`: AWS region. If not specified, uses AWS_REGION or AWS_DEFAULT_REGION.
+- `access_key_id`: AWS Access Key ID. If not specified, uses AWS_ACCESS_KEY_ID.
+- `secret_access_key`: AWS Secret Access Key. If not specified, uses AWS_SECRET_ACCESS_KEY.
+- `session_token`:  AWS Session Token (for temporary credentials). If not specified, uses
+  AWS_SESSION_TOKEN.
+
+For GCP Cloud SQL IAM authentication, set `type` to `"gcp_cloud_sql"`.
+
+Example for GCP Cloud SQL with credentials from a secret:
+```json
+{
+  "iam_auth": {
+    "type": "gcp_cloud_sql",
+    "credentials_json": { "type": "env_from", "variable": "GOOGLE_APPLICATION_CREDENTIALS_JSON" }
+  }
+}
+```
+
+The init container must have GCP credentials (via Workload Identity or service account key).
+Use either `credentials_json` OR `credentials_path`, not both.
+
+Parameters:
+- `credentials_json`: Inline service account JSON key content. Specify the env var that
+  contains the raw JSON content of the service account key. Example: ` { "type": "env",
+  "variable": "GOOGLE_APPLICATION_CREDENTIALS_JSON" } `.
+- `credentials_path`: Path to service account JSON key file. Specify the env var that
+  contains the file path to the service account key. The file must be accessible from the
+  init container. Example: `{"type": "env", "variable": "GOOGLE_APPLICATION_CREDENTIALS"}`.
+- `project`: GCP project ID. If not specified, uses GOOGLE_CLOUD_PROJECT or GCP_PROJECT.
 
 When configuring a branch for Redis, set `type` to `redis`.
 
@@ -1160,6 +1201,69 @@ Optional unique identifier for reusing branches across sessions.
 
 Local Redis runtime configuration.
 Only used when `location` is `local`.
+
+Configuration for local Redis runtime.
+
+##### feature.db_branches[].local.container_command (type: redis)
+
+Custom path to the container command.
+If not provided, uses the runtime name from PATH (e.g., "docker").
+Example: `/usr/local/bin/docker` or `/home/user/.local/bin/podman`
+
+##### feature.db_branches[].local.container_runtime (type: redis)
+
+Which container runtime to use (Docker, Podman, or nerdctl).
+Only applies when `runtime` is `container` or `auto`.
+
+Container runtimes supported by mirrord.
+
+Docker container runtime. (default)
+
+nerdctl container runtime (containerd).
+
+Podman container runtime.
+
+##### feature.db_branches[].local.options (type: redis)
+
+Additional Redis configuration options.
+
+Example:
+```json
+{
+  "args": ["--maxmemory", "256mb", "--appendonly", "yes"]
+}
+```
+
+Raw arguments passed directly to redis-server or as Docker CMD args.
+Use standard Redis config syntax (e.g., "--maxmemory 256mb").
+
+##### feature.db_branches[].local.port (type: redis)
+
+Local port to bind Redis to (default: 6379).
+
+##### feature.db_branches[].local.runtime (type: redis)
+
+Runtime backend for local Redis: `container`, `redis_server`, or `auto`.
+
+For container-based runtimes, mirrord spawns the Redis image in a container.
+For `redis_server`, it runs the native binary directly.
+
+Backends:
+- `container` (default) - Uses a container runtime (Docker/Podman/nerdctl), configured via
+  `container_runtime`.
+- `redis_server` - Uses native redis-server binary
+- `auto` - Tries container first, falls back to redis-server
+
+##### feature.db_branches[].local.server_command (type: redis)
+
+Custom path to the redis-server binary.
+If not provided, uses "redis-server" from PATH.
+Example: `/opt/redis/bin/redis-server`
+
+##### feature.db_branches[].local.version (type: redis)
+
+Redis version/tag to use (default: "7-alpine").
+Used as the container image tag.
 
 #### feature.db_branches[].location (type: redis) {#feature-db_branches-redis-location}
 
@@ -1376,6 +1480,8 @@ Will do the next replacements for any io operaton
 
 #### feature.fs.mode {#feature-fs-mode}
 
+### feature.fs.mode {#feature-fs-mode}
+
 Configuration for enabling read-only or read-write file operations.
 
 These options are overriden by user specified overrides and mirrord default overrides.
@@ -1386,19 +1492,19 @@ Default option for general file configuration.
 
 The accepted values are: `"local"`, `"localwithoverrides`, `"read"`, or `"write`.
 
-**feature.fs.mode.local**
+#### feature.fs.mode.local {#feature-fs-mode-local}
 
 mirrord won't do anything fs-related, all operations will be local.
 
-**feature.fs.mode.localwithoverrides**
+#### feature.fs.mode.localwithoverrides {#feature-fs-mode-localwithoverrides}
 
 mirrord will run overrides on some file operations, but most will be local.
 
-**feature.fs.mode.read**
+#### feature.fs.mode.read {#feature-fs-mode-read}
 
 mirrord will read files from the remote, but won't write to them.
 
-**feature.fs.mode.write**
+#### feature.fs.mode.write {#feature-fs-mode-write}
 
 mirrord will read/write from the remote.
 
@@ -1483,7 +1589,7 @@ Mind that:
 - DNS filter currently works only with frameworks that use `getaddrinfo`/`gethostbyname`
   functions.
 
-**feature.network.dns.filter**
+##### feature.network.dns.filter {#feature-network-dns-filter}
 
 Unstable: the precise syntax of this config is subject to change.
 
@@ -1617,7 +1723,7 @@ Steal only traffic that matches the
 }
 ```
 
-**feature.network.incoming.http_filter**
+##### feature.network.incoming.http_filter {#feature-network-incoming-http-filter}
 
 Filter configuration for the HTTP traffic stealer feature.
 
@@ -1733,8 +1839,102 @@ Example:
 
 ##### feature.network.incoming.http_filter.body_filter {#feature-network-incoming-http-body-filter}
 
-Matches the request based on the contents of its body. Currently only JSON body filtering
-is supported.
+Matches the request based on the contents of its body.
+
+Currently only JSON body filtering is supported.
+
+##### feature.network.incoming.inner_filter.body_filter.json {#feature-network-incoming-inner-body-filter-json}
+
+Tries to parse the body as a JSON object and find (a) matching subobjects(s).
+
+`query` should be a valid JSONPath (RFC 9535) query string.
+`matches` should be a regex. Supports regexes validated by the
+[`fancy-regex`](https://docs.rs/fancy-regex/latest/fancy_regex/) crate
+
+Example:
+```json
+"http_filter": {
+  "body_filter": {
+    "body": "json",
+    "query": "$.library.books[*]",
+    "matches": "^\\d{3,5}$"
+  }
+}
+```
+will match
+```json
+{
+  "library": {
+    "books": [
+      34555,
+      1233,
+      234
+      23432
+    ]
+  }
+}
+```
+
+The filter will match if there is at least one query result.
+
+Non-string matches are stringified before being compared to
+the regex. To filter query results by type, the `typeof`
+[function extension](https://www.rfc-editor.org/rfc/rfc9535.html#name-function-extensions)
+is provided. It takes in a single `NodesType` parameter and
+returns `"null" | "bool" | "number" | "string" | "array" | "object"`,
+depending on the type of the argument. If not all nodes in the
+argument have the same type, it returns `nothing`.
+
+Example:
+
+```json
+"body_filter": {
+  "body": "json",
+  "query": "$.books[?(typeof(@) == 'number')]",
+  "matches": "4$"
+}
+```
+will match
+
+```json
+{
+  "books": [
+    1111,
+    2222,
+    4444
+  ]
+}
+```
+
+but not
+
+```json
+{
+  "books": [
+    "1111",
+    "2222",
+    "4444"
+  ]
+}
+```
+
+
+
+To use with with `all_of` or `any_of`, use the following syntax:
+```json
+"http_filter": {
+  "all_of": [
+    {
+      "path": "/buildings"
+    },
+    {
+      "body": "json",
+      "query": "$.library.books[*]",
+      "matches": "^\\d{3,5}$"
+    }
+  ]
+}
+```
 
 ##### feature.network.incoming.http_filter.header_filter {#feature-network-incoming-http-header-filter}
 
@@ -1766,7 +1966,7 @@ If any of the two matches, the request is stolen.
 Activate the HTTP traffic filter only for these ports. When
 absent, filtering will be done for all ports.
 
-**feature.network.incoming.https_delivery**
+##### feature.network.incoming.https_delivery {#feature-network-incoming-https_delivery}
 
 DEPRECATED: use `tls_delivery` instead.
 
@@ -1856,9 +2056,9 @@ Directories are not traversed recursively.
 Each certificate found in the files is treated as an allowed root.
 The files can contain entries of other types, e.g private keys, which are ignored.
 
-**feature.network.incoming.ignore_localhost**
+##### feature.network.incoming.ignore_localhost {#feature-network-incoming-ignore_localhost}
 
-**feature.network.incoming.ignore_ports**
+##### feature.network.incoming.ignore_ports {#feature-network-incoming-ignore_ports}
 
 Ports to ignore when mirroring/stealing traffic, these ports will remain local.
 
@@ -1869,7 +2069,7 @@ a health probe, or other heartbeat-like traffic).
 
 Mutually exclusive with [`feature.network.incoming.ports`](#feature-network-ports).
 
-**feature.network.incoming.listen_ports**
+##### feature.network.incoming.listen_ports {#feature-network-incoming-listen_ports}
 
 Mapping for local ports to actually used local ports.
 When application listens on a port while steal/mirror is active
@@ -1884,7 +2084,7 @@ you probably can't listen on `80` without sudo, so you can use `[[80, 4480]]`
 then access it on `4480` while getting traffic from remote `80`.
 The value of `port_mapping` doesn't affect this.
 
-**feature.network.incoming.mode**
+##### feature.network.incoming.mode {#feature-network-incoming-mode}
 
 Allows selecting between mirrorring or stealing traffic.
 
@@ -1902,7 +2102,7 @@ Can be set to either `"mirror"` (default), `"steal"` or `"off"`.
    on a port is HTTP (in a best-effort kind of way, not guaranteed to be HTTP), and steals the
    traffic on the port if it is HTTP;
 
-**feature.network.incoming.on_concurrent_steal**
+##### feature.network.incoming.on_concurrent_steal {#feature-network-incoming-on_concurrent_steal}
 
 (Operator Only): Allows overriding port locks
 
@@ -1912,7 +2112,7 @@ Can be set to either `"continue"` or `"override"`.
 - `"override"`: If port lock detected then override it with new lock and force close the
   original locking connection.
 
-**feature.network.incoming.port_mapping**
+##### feature.network.incoming.port_mapping {#feature-network-incoming-port_mapping}
 
 Mapping for local ports to remote ports.
 
@@ -1920,7 +2120,7 @@ This is useful when you want to mirror/steal a port to a different port on the r
 machine. For example, your local process listens on port `9333` and the container listens
 on port `80`. You'd use `[[9333, 80]]`
 
-**feature.network.incoming.ports
+##### feature.network.incoming.ports {#feature-network-incoming-ports}
 
 When set, traffic will only be mirrored/stolen on these ports,
 and other ports will remain local. Otherwise, all ports are
@@ -1929,7 +2129,7 @@ mirrored/stolen.
 Mutually exclusive with
 [`feature.network.incoming.ignore_ports`](#feature-network-ignore_ports).
 
-**feature.network.incoming.tls_delivery**
+##### feature.network.incoming.tls_delivery {#feature-network-incoming-tls_delivery}
 
 (Operator Only): configures how mirrord delivers stolen TLS traffic
 to the local application.
@@ -2065,7 +2265,7 @@ this feature are **mutually** exclusive.
 }
 ```
 
-**feature.network.outgoing.filter**
+##### feature.network.outgoing.filter {#feature.network.outgoing.filter}
 
 Filters that are used to send specific traffic from either the remote pod or the local app
 
@@ -2118,19 +2318,19 @@ everything else will go through the remote pod.
 When filters are specified under `remote`, matching traffic will go through the remote pod,
 everything else will go through local.
 
-**feature.network.outgoing.ignore_localhost**
+##### feature.network.outgoing.ignore_localhost {#feature.network.outgoing.ignore_localhost}
 
 Defaults to `false`.
 
-**feature.network.outgoing.tcp**
+##### feature.network.outgoing.tcp {#feature.network.outgoing.tcp}
 
 Defaults to `true`.
 
-**feature.network.outgoing.udp**
+##### feature.network.outgoing.udp {#feature.network.outgoing.udp}
 
 Defaults to `true`.
 
-**feature.network.outgoing.unix_streams**
+##### feature.network.outgoing.unix_streams {#feature.network.outgoing.unix_streams}
 
 Connect to these unix streams remotely (and to all other paths locally).
 
@@ -2602,5 +2802,3 @@ doing any network requests. This is useful when the system sets a proxy
 but you don't want mirrord to use it.
 This also applies to the mirrord process (as it just removes the env).
 If the remote pod sets this env, the mirrord process will still use it.
-
-
